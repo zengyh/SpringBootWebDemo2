@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="io.bloom.insurance.web.mapper.StudyVideoMapper">
+
+    <resultMap id="beanMap" type="io.bloom.insurance.web.model.StudyVideoDO">
+        <id property="id" column="ID"/>
+        <result property="videoName" column="video_name"/>
+        <result property="videoContent" column="video_content" javaType="java.sql.Blob" typeHandler="org.apache.ibatis.type.BlobTypeHandler"/>
+        <result property="videoFileType" column="video_file_type"/>
+        <result property="imageContent" column="image_conent" javaType="java.sql.Blob" typeHandler="org.apache.ibatis.type.BlobTypeHandler"/>
+        <result property="imageFileType" column="image_file_type"/>
+        <result property="companyCode" column="companycode"/>
+        <result property="createBy" column="create_by"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="createTime" column="create_date"/>
+        <result property="updateTime" column="update_date"/>
+        <result property="companyCName" column="companycname"/>
+    </resultMap>
+
+    <!--添加一条记录-->
+    <insert id="insert" parameterType="io.bloom.insurance.web.model.StudyVideoDO" >
+        <selectKey resultType="long" keyProperty="id" order="BEFORE">
+            select T_STUDY_VIEDO_SEQUENCE.nextval as ID from dual
+        </selectKey>
+
+        INSERT INTO T_STUDY_VIEDO
+        (
+        ID
+        ,video_name
+        ,video_content
+        ,video_file_type
+        ,image_conent
+        ,image_file_type
+        ,companycode
+        ,create_by
+        ,update_by
+        ,create_date
+        ,update_date
+        )
+        VALUES
+        (
+        #{id}
+        ,#{videoName}
+        ,#{videoContent,jdbcType=BLOB,typeHandler=org.apache.ibatis.type.BlobTypeHandler}
+        ,#{videoFileType}
+        ,#{imageContent,jdbcType=BLOB,typeHandler=org.apache.ibatis.type.BlobTypeHandler}
+        ,#{imageFileType}
+        ,#{companyCode}
+        ,#{createBy}
+        ,#{updateBy}
+        ,#{createTime}
+        ,#{updateTime}
+        )
+    </insert>
+
+    <insert id="insertSelective" parameterType="io.bloom.insurance.web.model.StudyVideoDO">
+
+        <selectKey resultType="int" keyProperty="id" order="BEFORE">
+            select T_STUDY_VIEDO_SEQUENCE.NEXTVAL as ID from dual
+        </selectKey>
+
+        insert into T_STUDY_VIEDO
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            ID,
+
+            <if test="videoName != null">video_name,</if>
+            <if test="videoContent != null">video_content,</if>
+            <if test="videoFileType != null">video_file_type,</if>
+            <if test="imageContent != null">image_conent,</if>
+            <if test="imageFileType != null">image_file_type,</if>
+            <if test="companyCode != null">companycode,</if>
+
+            <if test="createBy != null">create_by,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="createTime != null">create_date,</if>
+            <if test="updateTime != null">update_date,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            #{id},
+
+            <if test="videoName != null">#{videoName},</if>
+            <if test="videoContent != null">#{videoContent,jdbcType=BLOB,typeHandler=org.apache.ibatis.type.BlobTypeHandler},</if>
+            <if test="videoFileType != null">#{videoFileType},</if>
+            <if test="imageContent != null">#{imageContent,jdbcType=BLOB,typeHandler=org.apache.ibatis.type.BlobTypeHandler},</if>
+            <if test="imageFileType != null">#{imageFileType},</if>
+            <if test="companyCode != null">#{companyCode},</if>
+
+            <if test="createBy != null">#{createBy},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+        </trim>
+    </insert>
+
+    <delete id="deleteByPk" parameterType="long">
+        delete
+        from T_STUDY_VIEDO
+        where ID = #{id}
+    </delete>
+
+    <sql id="select_where_criteria">
+        <if test="criteria.id !=null">
+            and T.ID = #{criteria.id}
+        </if>
+
+        <if test="criteria.videoName != null">
+            AND T.video_name = #{criteria.videoName}
+        </if>
+
+        <if test="criteria.videoFileType != null">
+            and T.video_file_type = #{criteria.videoFileType}
+        </if>
+
+        <if test="criteria.imageFileType != null">
+            and T.image_file_type = #{criteria.imageFileType}
+        </if>
+
+        <if test="criteria.companyCode != null">
+            and T.companycode like  #{criteria.companyCode} || '%'
+        </if>
+
+        <if test="criteria.createBy != null">
+            and T.create_by = #{criteria.createBy}
+        </if>
+
+        <if test="criteria.updateBy != null">
+            and T.update_by = #{criteria.updateBy}
+        </if>
+
+        <if test="criteria.startDate != null and  criteria.endDate == null ">
+            and T.create_date >= #{criteria.startDate}
+        </if>
+
+        <if test="criteria.startDate == null and  criteria.endDate != null ">
+            <![CDATA[   T.create_date < #{criteria.endDate} + 1   ]]>
+        </if>
+
+        <if test="criteria.startDate != null and  criteria.endDate != null ">
+            <![CDATA[   and T.create_date >= #{criteria.startDate} and T.create_date < #{criteria.endDate} + 1   ]]>
+        </if>
+
+    </sql>
+    <select id="select" parameterType="io.bloom.plugin.mybatis.SqlCriteria" resultMap="beanMap">
+        <choose>
+            <when test="rowBound != null">
+                SELECT * FROM
+                (
+                SELECT T.*, ROWNUM RN
+                FROM (SELECT  t1.id,t1.video_name,t1.companycode,t1.create_by,
+                              t1.update_by,t1.create_date,t1.update_date,
+                              null as video_content,t1.video_file_type,
+                              null as image_conent,t1.image_file_type,
+                              c.companycname from T_STUDY_VIEDO t1 left join ggcompany c on t1.companycode = c.companycode  ) T
+                <where>
+                    <include refid="select_where_criteria"/>
+                    <if test="rowBound!=null">
+                        and <![CDATA[ ROWNUM <= #{rowBound.end} ]]>
+                    </if>
+
+                </where>
+                )
+                WHERE RN > #{rowBound.offset}
+            </when>
+            <otherwise>
+                SELECT  T.id,T.video_name,T.companycode,T.create_by,
+                        T.update_by,T.create_date,T.update_date,
+                        null as video_content,T.video_file_type,
+                        null as image_conent,T.image_file_type,
+                        c.companycname from T_STUDY_VIEDO T left join ggcompany c on T.companycode = c.companycode
+                <where>
+                    <include refid="select_where_criteria"/>
+                </where>
+
+            </otherwise>
+        </choose>
+    </select>
+
+    <select id="selectByPk" parameterType="long" resultMap="beanMap">
+        SELECT  T.*,c.companycname from T_STUDY_VIEDO T left join ggcompany c on T.companycode = c.companycode where T.ID=#{id}
+    </select>
+
+    <select id="count" parameterType="io.bloom.plugin.mybatis.SqlCriteria" resultType="int">
+        SELECT count(1)
+        FROM T_STUDY_VIEDO T
+        <where>
+            <include refid="select_where_criteria"/>
+        </where>
+    </select>
+
+    <update id="updateByPk" parameterType="Object">
+        UPDATE T_STUDY_VIEDO
+        <set>
+            <if test="videoName!= null">
+                video_name = #{videoName},
+            </if>
+            <if test="imageContent != null">
+                image_conent = #{imageContent,jdbcType=BLOB,typeHandler=org.apache.ibatis.type.BlobTypeHandler},
+            </if>
+            <if test="imageFileType != null">
+                image_file_type = #{imageFileType},
+            </if>
+            <if test="updateBy != null">
+                update_by = #{updateBy}
+            </if>
+        </set>
+        WHERE ID=#{id}
+    </update>
+</mapper>

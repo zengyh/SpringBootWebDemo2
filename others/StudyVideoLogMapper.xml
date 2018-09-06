@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="io.bloom.insurance.web.mapper.StudyVideoLogMapper">
+
+    <resultMap id="beanMap" type="io.bloom.insurance.web.model.StudyVideoLogDO">
+        <id property="id" column="ID"/>
+        <result property="videoName" column="video_name"/>
+        <result property="videoFileType" column="video_file_type"/>
+        <result property="companyCode" column="companycode"/>
+        <result property="createBy" column="create_by"/>
+        <result property="operator" column="operator"/>
+        <result property="createTime" column="create_date"/>
+        <result property="updateTime" column="log_date"/>
+        <result property="companyCName" column="companycname"/>
+        <result property="operatorMsg" column="operator_msg"/>
+    </resultMap>
+
+    <!--添加一条记录-->
+    <insert id="insert" parameterType="io.bloom.insurance.web.model.StudyVideoLogDO" >
+        <selectKey resultType="long" keyProperty="id" order="BEFORE">
+            select T_STUDY_VIEDO_LOG_SEQUENCE.nextval as ID from dual
+        </selectKey>
+
+        INSERT INTO T_STUDY_VIEDO_LOG
+        (
+        ID
+        ,video_name
+        ,video_file_type
+        ,companycode
+        ,create_by
+        ,create_date
+        ,operator
+        ,log_date
+        ,operator_msg
+        )
+        VALUES
+        (
+        #{id}
+        ,#{videoName}
+        ,#{videoFileType}
+        ,#{companyCode}
+        ,#{createBy}
+        ,#{createTime}
+        ,#{operator}
+        ,#{updateTime}
+        ,#{operatorMsg}
+        )
+    </insert>
+
+    <insert id="insertSelective" parameterType="io.bloom.insurance.web.model.StudyVideoLogDO">
+
+        <selectKey resultType="int" keyProperty="id" order="BEFORE">
+            select T_STUDY_VIEDO_LOG_SEQUENCE.NEXTVAL as ID from dual
+        </selectKey>
+
+        insert into T_STUDY_VIEDO_LOG
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            ID,
+
+            <if test="videoName != null">video_name,</if>
+            <if test="videoFileType != null">video_file_type,</if>
+            <if test="companyCode != null">companycode,</if>
+
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_date,</if>
+            <if test="operator != null">operator,</if>
+            <if test="updateTime != null">log_date,</if>
+            <if test="operatorMsg != null">operator_msg,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            #{id},
+
+            <if test="videoName != null">#{videoName},</if>
+            <if test="videoFileType != null">#{videoFileType},</if>
+            <if test="companyCode != null">#{companyCode},</if>
+
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="operator != null">#{operator},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="operatorMsg != null">#{operatorMsg},</if>
+        </trim>
+    </insert>
+
+    <delete id="deleteByPk" parameterType="long">
+        delete
+        from T_STUDY_VIEDO_LOG
+        where ID = #{id}
+    </delete>
+
+    <sql id="select_where_criteria">
+        <if test="criteria.id !=null">
+            and T.ID = #{criteria.id}
+        </if>
+
+        <if test="criteria.videoName != null">
+            AND T.video_name = #{criteria.videoName}
+        </if>
+
+        <if test="criteria.videoFileType != null">
+            and T.video_file_type = #{criteria.videoFileType}
+        </if>
+
+        <if test="criteria.companyCode != null">
+            and T.companycode like  #{criteria.companyCode} || '%'
+        </if>
+
+        <if test="criteria.createBy != null">
+            and T.create_by = #{criteria.createBy}
+        </if>
+
+        <if test="criteria.operator != null">
+            and T.operator = #{criteria.operator}
+        </if>
+
+        <if test="criteria.startDate != null and  criteria.endDate == null ">
+            and T.create_date >= #{criteria.startDate}
+        </if>
+
+        <if test="criteria.startDate == null and  criteria.endDate != null ">
+            <![CDATA[   T.create_date < #{criteria.endDate} + 1   ]]>
+        </if>
+
+        <if test="criteria.startDate != null and  criteria.endDate != null ">
+            <![CDATA[   and T.create_date >= #{criteria.startDate} and T.create_date < #{criteria.endDate} + 1   ]]>
+        </if>
+
+    </sql>
+    <select id="select" parameterType="io.bloom.plugin.mybatis.SqlCriteria" resultMap="beanMap">
+        <choose>
+            <when test="rowBound != null">
+                SELECT * FROM
+                (
+                SELECT T.*, ROWNUM RN
+                FROM (SELECT  t1.*,c.companycname from T_STUDY_VIEDO_LOG t1 left join ggcompany c on t1.companycode = c.companycode  ) T
+                <where>
+                    <include refid="select_where_criteria"/>
+                    <if test="rowBound!=null">
+                        and <![CDATA[ ROWNUM <= #{rowBound.end} ]]>
+                    </if>
+
+                </where>
+                )
+                WHERE RN > #{rowBound.offset}
+            </when>
+            <otherwise>
+                SELECT  T.*,c.companycname from T_STUDY_VIEDO_LOG T left join ggcompany c on T.companycode = c.companycode
+                <where>
+                    <include refid="select_where_criteria"/>
+                </where>
+
+            </otherwise>
+        </choose>
+    </select>
+
+    <select id="selectByPk" parameterType="long" resultMap="beanMap">
+        SELECT  T.*,c.companycname from T_STUDY_VIEDO_LOG T left join ggcompany c on T.companycode = c.companycode where T.ID=#{id}
+    </select>
+
+    <select id="count" parameterType="io.bloom.plugin.mybatis.SqlCriteria" resultType="int">
+        SELECT count(1)
+        FROM T_STUDY_VIEDO_LOG T
+        <where>
+            <include refid="select_where_criteria"/>
+        </where>
+    </select>
+
+    <update id="updateByPk" parameterType="Object">
+        UPDATE T_STUDY_VIEDO_LOG
+        <set>
+            <if test="operator != null">
+                operator = #{operator},
+            </if>
+            <if test="updateTime != null">
+                log_date = #{updateTime}
+            </if>
+        </set>
+        WHERE ID=#{id}
+    </update>
+</mapper>
