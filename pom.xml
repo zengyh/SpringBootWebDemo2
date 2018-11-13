@@ -32,12 +32,17 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter</artifactId>
-			<!-- 排除自带的Logback日志工具依赖，为了项目使用Log4j2日志打印工具 -->
 			<exclusions>
+				<!-- 排除（不使用）自带的Logback日志工具依赖，为了项目使用Log4j2日志打印工具 -->
 			    <exclusion>
 				     <groupId>org.springframework.boot</groupId>
 				     <artifactId>spring-boot-starter-logging</artifactId>
 			    </exclusion>
+				<!--排除（不使用）SpringBoot内嵌的Tomcat，项目使用外置的Tomcat-->
+				<exclusion>
+					<groupId>org.springframework.boot</groupId>
+					<artifactId>spring-boot-starter-tomcat</artifactId>
+				</exclusion>
 			</exclusions>
 		</dependency>
 		<dependency>
@@ -96,18 +101,22 @@
 			<artifactId>jstl</artifactId>
 		</dependency>
 		<!-- end -->
+		<!-- 导入Thymeleaf 模板引擎依赖，不使用该模板引擎，可以去除该依赖 -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-tomcat</artifactId>
-			<scope>provided</scope>
-		</dependency>
-		<!--用于编译jsp-->
-		<dependency>
-			<groupId>org.apache.tomcat.embed</groupId>
-			<artifactId>tomcat-embed-jasper</artifactId>
-			<!--<scope>provided</scope>-->
+			<artifactId>spring-boot-starter-thymeleaf</artifactId>
 		</dependency>
 		<!-- end -->
+        <!-- 热部署，项目修改代码，不需要重启服务器，开发的时候推荐使用，部署到生产可以去掉-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-devtools</artifactId>
+            <!-- optional=true，当project-A 依赖project-B,  project-B 依赖project-D时，
+                    则project-A不依赖project-D
+                    默认<optional>的值为false,必须依赖  -->
+            <optional>true</optional>
+        </dependency>
+        <!-- end -->
 	</dependencies>
 
 	<!--实现多环境配置打包-->
@@ -142,6 +151,8 @@
 	</profiles>
 	
 	<build>
+		<!-- 项目打包（packaging）后的文件名，去掉了后缀 -->
+	    <finalName>${project.artifactId}</finalName>
 		<resources>
 			<resource>
 				<directory>src/main/resources</directory>
@@ -161,6 +172,7 @@
 			<!-- end -->
 			<!-- 将libs/目录下的第三方jar包也打包进项目，只对将项目打包成jar形式的文件有效！ -->
 			<!--      第三包jar包，既Maven仓库上没有的jar包，只能网上找其它资源下载的 -->
+			<!--      如果项目不打包成jar包，则可以去掉该项配置，否则必须配置-->
 			<!--
 			<resource>
 				<directory>libs</directory>
@@ -193,6 +205,7 @@
 			<!-- end -->
 			<!--maven-war-plugins插件，将libs/目录下的第三方jar包也打包进项目，只对将项目打包成war形式的文件有效！-->
 			<!--      第三包jar包，既Maven仓库上没有的jar包，只能网上找其它资源下载的 -->
+			<!--      如果项目不打包成jar包，则可以去掉该项配置，否则必须配置-->
             <plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-war-plugin</artifactId>
@@ -209,6 +222,77 @@
 				</configuration>
 			</plugin>
 			<!-- end -->
+			<!-- compile、test、package等操作之前都先进行clean，所以无需手动clean -->
+			<!-- 目前没有问题，假设以后该插件的配置不兼容了，可以去掉！-->
+			<!-- 如果去掉了该项配置，就需要执行这些步骤之前，手动【clean】以下， -->
+			<!--   否则，打包的资源文件里面，会包含多个环境(profile)的properties，虽然不影响程序运行，但是且包含了不必要（别的环境）的配置文件！！-->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-clean-plugin</artifactId>
+				<executions>
+					<execution>
+                        <phase>validate</phase>
+						<goals>
+							<goal>clean</goal>
+						</goals>
+                    </execution>
+				</executions>
+			</plugin>
+			<!-- end -->
 		</plugins>
 	</build>
+
+	<!-- repositories 配置远程仓库 -->
+	<!-- 1、先从settings.xml配置的仓库<repositories>中下载构建（即jar包），如果没有该构建，则从pom.xml的<repositories>中下载-->
+	<!-- 2、构建的下载，按照配置的仓库的先后顺序来查找和下载-->
+	<!-- 3、【特别注意】 如果 settings.xml配置了mirrors镜像仓库，则该配置无效！【不】会从pom.xml的<repositories>中下载，只会从mirrors镜像仓库中查找下载！-->
+	<repositories>
+	    <repository>
+	        <id>nexus-aliyun</id>
+	        <name>Nexus aliyun</name>
+	        <url>http://maven.aliyun.com/nexus/content/groups/public</url>
+	        <releases>
+	            <enabled>true</enabled>
+	        </releases>
+	        <snapshots>
+	            <enabled>false</enabled>
+	        </snapshots>
+	    </repository>
+	    <repository>
+	        <id>Central2</id>
+	        <name>Central Repository</name>
+	        <url>http://central.maven.org/maven2</url>
+	        <releases>
+	            <enabled>true</enabled>
+	        </releases>
+	        <snapshots>
+	            <enabled>false</enabled>
+	        </snapshots>
+	    </repository>
+	</repositories>
+    <pluginRepositories>
+        <pluginRepository>
+	        <id>nexus-aliyun</id>
+	        <name>Nexus aliyun</name>
+	        <url>http://maven.aliyun.com/nexus/content/groups/public</url>
+	        <releases>
+	            <enabled>true</enabled>
+	        </releases>
+	        <snapshots>
+	            <enabled>false</enabled>
+	        </snapshots>
+        </pluginRepository>
+        <pluginRepository>
+	        <id>Central2</id>
+	        <name>Central Repository</name>
+	        <url>http://central.maven.org/maven2</url>
+	        <releases>
+	            <enabled>true</enabled>
+	        </releases>
+	        <snapshots>
+	            <enabled>false</enabled>
+	        </snapshots>
+        </pluginRepository>
+    </pluginRepositories>
+	
 </project>

@@ -14,7 +14,7 @@ import org.springframework.context.annotation.Configuration;
 public class FilterConfiguration
 {
     @Bean
-    public FilterRegistrationBean testFilterRegistration() {
+    public FilterRegistrationBean pathFilterRegistration() {
 
         FilterRegistrationBean registration = new FilterRegistrationBean();
         registration.setFilter(new PathFilter());

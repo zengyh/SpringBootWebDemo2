@@ -17,7 +17,7 @@ public class HelloWorldJspController
 {
     @RequestMapping(value = "/jsp")
     public String hello(){
-        return "helloworld";
+        return "helloWorld/helloworld.jsp";
     }
 
 }
